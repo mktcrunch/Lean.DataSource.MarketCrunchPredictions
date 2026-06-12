@@ -1,0 +1,23 @@
+<!--
+  Data-processing console tool for MarketCrunchPredictions.
+
+  NOTE: reconcile QuantConnect package versions and <TargetFramework> with the cloned
+  Lean.DataSource.SDK template before building.
+-->
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>disable</Nullable>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>QuantConnect.DataProcessing</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- TODO: align with the SDK template / your LEAN build. -->
+    <PackageReference Include="QuantConnect.Common" Version="*" />
+    <PackageReference Include="QuantConnect.Configuration" Version="*" />
+  </ItemGroup>
+
+</Project>

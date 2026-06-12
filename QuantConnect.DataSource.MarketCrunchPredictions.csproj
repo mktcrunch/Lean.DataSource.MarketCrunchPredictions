@@ -1,0 +1,34 @@
+<!--
+  Main data-source project for MarketCrunchPredictions.
+
+  NOTE: package references and <TargetFramework> below are a starting point. When you clone the
+  official QuantConnect/Lean.DataSource.SDK template, replace/merge these with the template's
+  csproj so the QuantConnect package versions and target framework match the LEAN build you
+  compile against. (The SDK template is the source of truth for references.)
+-->
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>disable</Nullable>
+    <AssemblyName>QuantConnect.DataSource.MarketCrunchPredictions</AssemblyName>
+    <RootNamespace>QuantConnect.DataSource</RootNamespace>
+    <OutputType>Library</OutputType>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+  </PropertyGroup>
+
+  <!-- This project builds the data model + demo algorithms. The processing tool and unit
+       tests are their own projects, so exclude their folders here. -->
+  <ItemGroup>
+    <Compile Remove="DataProcessing/**/*.cs" />
+    <Compile Remove="tests/**/*.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- TODO: align versions with the cloned Lean.DataSource.SDK template / your LEAN build. -->
+    <PackageReference Include="QuantConnect.Common" Version="*" />
+    <PackageReference Include="QuantConnect.Algorithm" Version="*" />
+  </ItemGroup>
+
+</Project>
