@@ -30,8 +30,8 @@ namespace QuantConnect.Algorithm.CSharp
 
         public override void Initialize()
         {
-            SetStartDate(2021, 6, 1);
-            SetEndDate(2024, 1, 1);
+            SetStartDate(2024, 1, 1);
+            SetEndDate(2024, 7, 1);
             SetCash(100000);
 
             // Subscribe to equity first, then add the linked custom data.

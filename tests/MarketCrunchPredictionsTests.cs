@@ -16,6 +16,7 @@
 using System;
 using System.IO;
 using System.Linq;
+using Newtonsoft.Json;
 using NUnit.Framework;
 using QuantConnect.Data;
 using QuantConnect.DataSource;
@@ -154,6 +155,59 @@ namespace QuantConnect.DataLibrary.Tests
         public void IsSparseDataIsCorrect()
         {
             Assert.AreEqual(true, new MarketCrunchPredictions().IsSparseData());
+        }
+
+        /// <summary>
+        /// Serializes and deserializes a fully-populated instance through JSON and asserts
+        /// every property round-trips. Catches missing/incorrect serialization attributes.
+        /// </summary>
+        [Test]
+        public void JsonRoundTrip()
+        {
+            var expected = CreateNewInstance();
+            var type = expected.GetType();
+            var serialized = JsonConvert.SerializeObject(expected);
+            var result = JsonConvert.DeserializeObject(serialized, type);
+
+            AssertAreEqual(expected, result);
+        }
+
+        private static void AssertAreEqual(object expected, object result)
+        {
+            foreach (var propertyInfo in expected.GetType().GetProperties())
+            {
+                // Skip indexers and write-only properties.
+                if (propertyInfo.GetIndexParameters().Length != 0 || !propertyInfo.CanRead)
+                {
+                    continue;
+                }
+                Assert.AreEqual(propertyInfo.GetValue(expected), propertyInfo.GetValue(result), propertyInfo.Name);
+            }
+            foreach (var fieldInfo in expected.GetType().GetFields())
+            {
+                Assert.AreEqual(fieldInfo.GetValue(expected), fieldInfo.GetValue(result), fieldInfo.Name);
+            }
+        }
+
+        private static MarketCrunchPredictions CreateNewInstance()
+        {
+            return new MarketCrunchPredictions
+            {
+                Symbol = Symbol.Empty,
+                Time = new DateTime(2024, 3, 19),
+                EndTime = new DateTime(2024, 3, 20),
+                CreateDate = new DateTime(2026, 6, 12),
+                PredictionPrice = 184.53m,
+                PredictionChange = 0.000009m,
+                PredConfidence = 99,
+                Last7DAccuracy = 71.43m,
+                Last30DAccuracy = 53.33m,
+                Last90DAccuracy = 47.78m,
+                ModelVersion = "mc-eod-v1",
+                ProducedTime = new DateTime(2026, 6, 12, 21, 48, 33),
+                CutoffDate = new DateTime(2024, 3, 19),
+                Value = 184.53m
+            };
         }
     }
 }

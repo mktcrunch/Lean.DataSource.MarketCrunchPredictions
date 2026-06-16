@@ -27,7 +27,7 @@
 | `tests/MarketCrunchPredictionsTests.cs` | Unit tests (read sample data from `output/`) |
 | `listing-about.md` | Marketplace short description |
 | `listing-documentation.md` | Full usage documentation (Python + C#) |
-| `output/alternative/marketcrunch/predictions/*.csv` | Header-less sample data for demos/tests |
+| `output/alternative/marketcrunch/predictions/{aapl,spy}.csv` | Minimal header-less sample data (Jan–Jun 2024) for demos/tests |
 
 ## CSV Format
 
@@ -35,7 +35,7 @@ On-disk per-symbol files are **header-less**, one row per prediction date, sorte
 
 ```
 create_date,ticker,prediction_date,prediction_price,prediction_change,pred_confidence,last_7d_accuracy,last_30d_accuracy,last_90d_accuracy,model_version,time,cutoff_date
-06-12-2026,AAPL,06-01-2021,121.85,-0.002071,0,71.43,63.33,48.89,mc-eod-v1,2026-06-12 21:48:33,05-28-2021
+06-12-2026,AAPL,03-20-2024,184.53,0.000009,99,71.43,53.33,47.78,mc-eod-v1,2026-06-12 21:48:33,03-19-2024
 ```
 
 (The Reader skips any header row defensively, so files with a header still parse.)
@@ -97,10 +97,10 @@ dotnet run --project DataProcessing/DataProcessing.csproj
 ```
 
 Processing duration (measured over all 246 tickers, ~308,800 prediction rows) —
-**Full dataset: ~0.57s** · **One-day update: ~0.3–0.6s**. The one-day update is the pass
-QuantConnect's data fleet runs in production: it merges that day's export (one row per ticker)
-into the existing per-symbol history. Measured on an Ubuntu 22.04 aarch64 sandbox; absolute
-numbers vary by host but both passes are sub-second at this dataset size.
+**Full dataset: ~2.0s** · **One-day update: ~0.3–0.5s**. The one-day update is the pass
+QuantConnect's data fleet runs in production (`QC_DATAFLEET_DEPLOYMENT_DATE` set): it merges
+that day's export (one row per ticker) into the existing per-symbol history. Measured on an
+Ubuntu 22.04 aarch64 sandbox; absolute numbers vary by host.
 
 ## Publication Lag
 
@@ -118,7 +118,8 @@ to with no look-ahead bias.
 - [ ] Data model inherits `BaseData`; `GetSource`/`Reader`/`Clone`/`ToString` implemented
 - [ ] `DataTimeZone`, `SupportedResolutions`, `DefaultResolution`, `IsSparseData`,
       `RequiresMapping` return correct values
-- [ ] `output/` contains only minimal sample data copied from the temp output directory
+- [x] `output/` contains only minimal sample data copied from the temp output directory
+      (AAPL + SPY, Jan–Jun 2024)
 - [ ] Demo algorithms run in both C# and Python without errors
 - [ ] `listing-about.md` and `listing-documentation.md` complete; asset classes capitalized
 - [ ] CI (`.github/workflows/build.yml`) green

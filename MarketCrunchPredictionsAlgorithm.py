@@ -12,8 +12,8 @@ class MarketCrunchPredictionsAlgorithm(QCAlgorithm):
     """
 
     def initialize(self):
-        self.set_start_date(2021, 6, 1)
-        self.set_end_date(2024, 1, 1)
+        self.set_start_date(2024, 1, 1)
+        self.set_end_date(2024, 7, 1)
         self.set_cash(100000)
 
         # Subscribe to equity first, then add the linked custom data.

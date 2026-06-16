@@ -28,10 +28,18 @@ namespace QuantConnect.DataProcessing
     /// Data processing program for the MarketCrunchPredictions dataset.
     ///
     /// MarketCrunch produces next-trading-day predictions each evening (~5:30pm ET) from its
-    /// end-of-day model and exports them as a daily CSV (one row per covered ticker) in the
-    /// agreed 12-column schema. This program reads the existing per-symbol files from
-    /// <c>Globals.DataFolder</c>, merges the new day's rows in, de-duplicates by prediction
-    /// date, sorts, and writes the merged result to the temp output directory.
+    /// end-of-day model and delivers them as a CSV export (one row per covered ticker) in the
+    /// agreed 12-column schema. This program has two modes:
+    ///
+    ///   - INCREMENTAL (the mode QuantConnect's data fleet runs): when
+    ///     QC_DATAFLEET_DEPLOYMENT_DATE is set, it reads that day's export, reads the existing
+    ///     per-symbol files from Globals.DataFolder, merges the new rows in, de-duplicates by
+    ///     prediction date, sorts, and writes each file back.
+    ///   - FULL HISTORY: when no deployment date is set, the export is treated as the full
+    ///     history and per-symbol files are rebuilt from scratch (no prior data is read).
+    ///
+    /// In both modes the merged result is written to the temp output directory via an atomic
+    /// write (write to a .tmp file, then move into place) — never directly to the repo output/.
     ///
     /// Column order (no header on disk):
     ///   create_date, ticker, prediction_date, prediction_price, prediction_change,
@@ -40,12 +48,12 @@ namespace QuantConnect.DataProcessing
     ///
     /// Configuration:
     ///   - Config.Get("temp-output-directory", "/temp-output-directory") – output path
-    ///   - Config.Get("marketcrunch-daily-file")                          – path to the day's export CSV
-    ///   - QC_DATAFLEET_DEPLOYMENT_DATE env var (yyyyMMdd)                 – date being processed
+    ///   - Config.Get("marketcrunch-daily-file")                          – path to the export CSV
+    ///   - QC_DATAFLEET_DEPLOYMENT_DATE env var (yyyyMMdd)                 – set => incremental mode
     ///
-    /// Processing Times (fill in after running):
-    ///   Full dataset:   &lt;TIME&gt;
-    ///   One day update: &lt;TIME&gt;
+    /// Processing times (246 tickers, ~308,800 rows; Ubuntu 22.04 aarch64):
+    ///   Full dataset:   ~2.0s
+    ///   One day update: ~0.3-0.5s
     /// </summary>
     public class Program
     {
@@ -60,25 +68,32 @@ namespace QuantConnect.DataProcessing
             var leanDataFolder = Globals.DataFolder;
             var tempOutputDir = Config.Get("temp-output-directory", "/temp-output-directory");
 
-            // Path to MarketCrunch's daily export for the deployment date (produced upstream
-            // from the screener_predictions pipeline). One CSV, all covered tickers, agreed schema.
-            var dailyFile = Config.Get("marketcrunch-daily-file");
+            // Path to MarketCrunch's export for this run (produced upstream by the prediction
+            // pipeline). One CSV, all covered tickers, agreed schema.
+            var exportFile = Config.Get("marketcrunch-daily-file");
 
             var deploymentDateStr = Environment.GetEnvironmentVariable("QC_DATAFLEET_DEPLOYMENT_DATE");
-            var deploymentDate = !string.IsNullOrEmpty(deploymentDateStr)
+            var incremental = !string.IsNullOrEmpty(deploymentDateStr);
+            var deploymentDate = incremental
                 ? DateTime.ParseExact(deploymentDateStr, "yyyyMMdd", CultureInfo.InvariantCulture)
                 : DateTime.UtcNow.Date;
 
+            Console.WriteLine($"Mode: {(incremental ? "INCREMENTAL" : "FULL HISTORY")} | export: {exportFile}");
+
             var sw = Stopwatch.StartNew();
 
-            // Group the day's export rows by ticker (skip a header row if present).
-            var newBySymbol = ReadDailyExport(dailyFile);
+            // Group the export rows by ticker (skip a header row if present).
+            var newBySymbol = ReadExport(exportFile);
 
             foreach (var kvp in newBySymbol)
             {
                 var symbol = kvp.Key.ToLowerInvariant();
-                var existingPath = Path.Combine(leanDataFolder, RelativeDataPath, $"{symbol}.csv");
-                var existing = ReadExisting(existingPath);
+
+                // Incremental mode merges with the data already on disk; full-history mode
+                // rebuilds from the export alone.
+                var existing = incremental
+                    ? ReadExisting(Path.Combine(leanDataFolder, RelativeDataPath, $"{symbol}.csv"))
+                    : new List<string[]>();
 
                 MergeAndSave(existing, kvp.Value, symbol, tempOutputDir);
             }
@@ -87,13 +102,13 @@ namespace QuantConnect.DataProcessing
             Console.WriteLine($"Processed {newBySymbol.Count} symbols for {deploymentDate:yyyy-MM-dd} in {sw.Elapsed.TotalSeconds:F2}s");
         }
 
-        /// <summary>Read the MarketCrunch daily export CSV into per-ticker row lists.</summary>
-        private static Dictionary<string, List<string[]>> ReadDailyExport(string path)
+        /// <summary>Read the MarketCrunch export CSV into per-ticker row lists.</summary>
+        private static Dictionary<string, List<string[]>> ReadExport(string path)
         {
             var bySymbol = new Dictionary<string, List<string[]>>(StringComparer.OrdinalIgnoreCase);
             if (string.IsNullOrEmpty(path) || !File.Exists(path))
             {
-                Console.WriteLine($"WARNING: daily export not found at '{path}'");
+                Console.WriteLine($"WARNING: export not found at '{path}'");
                 return bySymbol;
             }
 
@@ -122,7 +137,10 @@ namespace QuantConnect.DataProcessing
                 .ToList();
         }
 
-        /// <summary>Merge new rows onto existing, de-dup by prediction_date, sort, write to temp output.</summary>
+        /// <summary>
+        /// Merge new rows onto existing, de-dup by prediction_date (new wins), sort ascending,
+        /// and write to the temp output directory using an atomic write (.tmp then move).
+        /// </summary>
         private static void MergeAndSave(
             List<string[]> existing, List<string[]> newRows, string symbol, string tempOutputDir)
         {
@@ -134,7 +152,11 @@ namespace QuantConnect.DataProcessing
 
             var outPath = Path.Combine(tempOutputDir, RelativeDataPath, $"{symbol}.csv");
             Directory.CreateDirectory(Path.GetDirectoryName(outPath)!);
-            File.WriteAllLines(outPath, merged.Select(r => string.Join(",", r)));
+
+            // Atomic write: never leave a partially-written file in place if the process dies.
+            var tmpPath = outPath + ".tmp";
+            File.WriteAllLines(tmpPath, merged.Select(r => string.Join(",", r)));
+            File.Move(tmpPath, outPath, overwrite: true);
         }
     }
 }
