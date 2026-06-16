@@ -1,35 +1,33 @@
-<!--
-  Unit test project for MarketCrunchPredictions.
-
-  NOTE: reconcile QuantConnect package versions and <TargetFramework> with the cloned
-  Lean.DataSource.SDK template before building.
--->
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <LangVersion>latest</LangVersion>
     <Nullable>disable</Nullable>
     <IsPackable>false</IsPackable>
     <RootNamespace>QuantConnect.DataLibrary.Tests</RootNamespace>
-    <!-- Tests read sample data via relative path "output/..."; run from the repo root. -->
   </PropertyGroup>
+
+  <!-- Compile the demo algorithm here (it is excluded from the main data-source assembly). -->
+  <ItemGroup>
+    <Compile Include="..\MarketCrunchPredictionsAlgorithm.cs" Link="MarketCrunchPredictionsAlgorithm.cs" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.*" />
     <PackageReference Include="NUnit" Version="3.*" />
     <PackageReference Include="NUnit3TestAdapter" Version="4.*" />
-    <!-- TODO: align with the SDK template / your LEAN build. -->
-    <PackageReference Include="QuantConnect.Common" Version="*" />
+    <PackageReference Include="QuantConnect.Algorithm" Version="2.5.*" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../QuantConnect.DataSource.MarketCrunchPredictions.csproj" />
+    <ProjectReference Include="..\QuantConnect.DataSource.csproj" />
   </ItemGroup>
 
-  <!-- Copy sample data next to the test assembly so relative paths resolve. -->
+  <!-- Copy sample data + config next to the test assembly so relative paths resolve. -->
   <ItemGroup>
-    <None Include="../output/**/*.csv" CopyToOutputDirectory="PreserveNewest" LinkBase="output" />
+    <None Include="..\output\**\*.csv" CopyToOutputDirectory="PreserveNewest" LinkBase="output" />
+    <None Update="config.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>

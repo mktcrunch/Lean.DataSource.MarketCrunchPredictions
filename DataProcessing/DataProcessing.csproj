@@ -1,23 +1,29 @@
-<!--
-  Data-processing console tool for MarketCrunchPredictions.
-
-  NOTE: reconcile QuantConnect package versions and <TargetFramework> with the cloned
-  Lean.DataSource.SDK template before building.
--->
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <LangVersion>latest</LangVersion>
     <Nullable>disable</Nullable>
     <OutputType>Exe</OutputType>
+    <AssemblyName>process</AssemblyName>
     <RootNamespace>QuantConnect.DataProcessing</RootNamespace>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- TODO: align with the SDK template / your LEAN build. -->
-    <PackageReference Include="QuantConnect.Common" Version="*" />
-    <PackageReference Include="QuantConnect.Configuration" Version="*" />
+    <PackageReference Include="QuantConnect.Common" Version="2.5.*" />
+    <PackageReference Include="QuantConnect.Configuration" Version="2.5.*" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\QuantConnect.DataSource.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="CLRImports.py" />
+    <Content Include="CLRImports.py" CopyToOutputDirectory="PreserveNewest" />
+    <None Remove="config.json" />
+    <Content Include="config.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>

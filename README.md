@@ -57,17 +57,72 @@ create_date,ticker,prediction_date,prediction_price,prediction_change,pred_confi
 
 ## Build & Test
 
-> The `.csproj` files reference the QuantConnect packages with wildcard versions and
-> `net9.0` as a starting point. **Reconcile them with the official
-> [Lean.DataSource.SDK](https://github.com/QuantConnect/Lean.DataSource.SDK) template** (package
-> versions + `TargetFramework`) before building, since that template matches the LEAN engine
-> you compile against.
+This repository follows the structure of the official
+[Lean.DataSource.SDK](https://github.com/QuantConnect/Lean.DataSource.SDK) template: the
+data model ships from `QuantConnect.DataSource.csproj`, the demo algorithm is compiled by the
+test project, and the data-processing tool is a standalone console project.
 
 ```bash
-dotnet build QuantConnect.DataSource.MarketCrunchPredictions.csproj
+dotnet build QuantConnect.DataSource.csproj      # data model assembly
+dotnet build DataProcessing/DataProcessing.csproj
 dotnet build tests/Tests.csproj
-dotnet test  tests/Tests.csproj      # run from the repo root so output/ resolves
+dotnet test  tests/Tests.csproj                  # run from the repo root so output/ resolves
 ```
+
+## Integration into LEAN
+
+To use this data source in a local LEAN engine:
+
+1. Clone LEAN and this repository side by side, then build this project:
+   `dotnet build QuantConnect.DataSource.csproj`.
+2. Copy the built assembly `bin/Debug/QuantConnect.DataSource.MarketCrunchPredictions.dll`
+   into LEAN's `Launcher/bin/Debug/`.
+3. Copy the sample data from `output/alternative/marketcrunch/predictions/` into LEAN's
+   `Data/alternative/marketcrunch/predictions/` folder.
+4. Copy `MarketCrunchPredictionsAlgorithm.cs` into `Algorithm.CSharp/` (or the `.py` into
+   `Algorithm.Python/`) and run a backtest. The algorithm subscribes via
+   `AddData<MarketCrunchPredictions>(equitySymbol)`.
+
+## Data Processing
+
+The daily incremental update reads the previous day's per-symbol files from
+`Globals.DataFolder`, merges the new day's export, de-duplicates by prediction date, and
+writes the merged result to the temp output directory (never to the repo `output/` folder):
+
+```bash
+# Incremental (one day)
+QC_DATAFLEET_DEPLOYMENT_DATE=$(date +%Y%m%d) dotnet run --project DataProcessing/DataProcessing.csproj
+# Full history
+dotnet run --project DataProcessing/DataProcessing.csproj
+```
+
+Processing duration (measured over all 246 tickers, ~308,800 prediction rows) —
+**Full dataset: ~0.57s** · **One-day update: ~0.3–0.6s**. The one-day update is the pass
+QuantConnect's data fleet runs in production: it merges that day's export (one row per ticker)
+into the existing per-symbol history. Measured on an Ubuntu 22.04 aarch64 sandbox; absolute
+numbers vary by host but both passes are sub-second at this dataset size.
+
+## Publication Lag
+
+Predictions are produced after market close (~5:30pm ET) on the cut-off day and apply to the
+**next** trading day. `Time` is the cut-off date (the prior trading day's close, the basis of
+the prediction) and `EndTime` is the prediction date, so the point fires on the day it applies
+to with no look-ahead bias.
+
+## PR / Submission Checklist
+
+- [ ] `QuantConnect.DataSource.csproj` builds without errors
+- [ ] `tests/Tests.csproj` builds and `dotnet test` passes
+- [ ] `DataProcessing/DataProcessing.csproj` builds and runs an incremental then full pass
+- [ ] Apache 2.0 license header on all `.cs` files; `LICENSE` present
+- [ ] Data model inherits `BaseData`; `GetSource`/`Reader`/`Clone`/`ToString` implemented
+- [ ] `DataTimeZone`, `SupportedResolutions`, `DefaultResolution`, `IsSparseData`,
+      `RequiresMapping` return correct values
+- [ ] `output/` contains only minimal sample data copied from the temp output directory
+- [ ] Demo algorithms run in both C# and Python without errors
+- [ ] `listing-about.md` and `listing-documentation.md` complete; asset classes capitalized
+- [ ] CI (`.github/workflows/build.yml`) green
+- [ ] Contact support@quantconnect.com to create the Data Market listing
 
 ## Reference
 

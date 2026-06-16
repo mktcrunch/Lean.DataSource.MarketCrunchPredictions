@@ -19,6 +19,7 @@ using System.Globalization;
 using System.IO;
 using NodaTime;
 using QuantConnect.Data;
+using QuantConnect.Util;
 
 namespace QuantConnect.DataSource
 {
@@ -115,6 +116,11 @@ namespace QuantConnect.DataSource
             var predictionDate = ParseDate(csv[2], DateFmt);
             var cutoffDate = ParseDate(csv[11], DateFmt);
 
+            // Parse numeric cells as nullable so empty cells become null (not 0) and we can
+            // distinguish "no value" from a genuine zero. Value falls back to 0m only at assignment.
+            var predictionPrice = ParseDecimal(csv[3]);
+            var confidence = ParseDecimal(csv[5]);
+
             return new MarketCrunchPredictions
             {
                 Symbol = config.Symbol,
@@ -122,22 +128,21 @@ namespace QuantConnect.DataSource
                 Time = cutoffDate != default ? cutoffDate : predictionDate, // basis (prior trading day)
                 CutoffDate = cutoffDate,
                 CreateDate = ParseDate(csv[0], DateFmt),
-                PredictionPrice = ParseDecimal(csv[3]),
-                PredictionChange = ParseDecimal(csv[4]),
-                PredConfidence = (int)ParseDecimal(csv[5]),
-                Last7DAccuracy = ParseDecimal(csv[6]),
-                Last30DAccuracy = ParseDecimal(csv[7]),
-                Last90DAccuracy = ParseDecimal(csv[8]),
+                PredictionPrice = predictionPrice ?? 0m,
+                PredictionChange = ParseDecimal(csv[4]) ?? 0m,
+                PredConfidence = (int)(confidence ?? 0m),
+                Last7DAccuracy = ParseDecimal(csv[6]) ?? 0m,
+                Last30DAccuracy = ParseDecimal(csv[7]) ?? 0m,
+                Last90DAccuracy = ParseDecimal(csv[8]) ?? 0m,
                 ModelVersion = csv[9],
                 ProducedTime = ParseTimestamp(csv[10]),
-                Value = ParseDecimal(csv[3])              // Value == PredictionPrice
+                Value = predictionPrice ?? 0m             // Value == PredictionPrice
             };
         }
 
-        private static decimal ParseDecimal(string s)
-            => string.IsNullOrWhiteSpace(s)
-                ? 0m
-                : decimal.Parse(s, NumberStyles.Any, CultureInfo.InvariantCulture);
+        private static decimal? ParseDecimal(string s)
+            => s.IfNotNullOrEmpty<decimal?>(
+                v => decimal.Parse(v, NumberStyles.Any, CultureInfo.InvariantCulture));
 
         private static DateTime ParseDate(string s, string fmt)
             => string.IsNullOrWhiteSpace(s)

@@ -1,0 +1,54 @@
+name: Setup
+description: Liberate disk space, checkout Lean, pull foundation image, define docker helper
+
+runs:
+  using: composite
+  steps:
+    - name: Liberate disk space
+      uses: jlumbroso/free-disk-space@main
+      with:
+        tool-cache: true
+        large-packages: false
+        docker-images: false
+        swap-storage: false
+
+    - name: Check if Lean has same branch
+      id: lean-branch-check
+      run: |
+        branch="${{ github.head_ref || github.ref_name }}"
+        if git ls-remote --exit-code --heads https://github.com/QuantConnect/Lean.git "$branch" > /dev/null 2>&1; then
+          echo "exists=true" >> $GITHUB_OUTPUT
+          echo "branch=$branch" >> $GITHUB_OUTPUT
+        else
+          echo "exists=false" >> $GITHUB_OUTPUT
+        fi
+      shell: bash
+
+    - name: Checkout Lean Same Branch
+      if: steps.lean-branch-check.outputs.exists == 'true'
+      uses: actions/checkout@v5
+      with:
+        ref: ${{ steps.lean-branch-check.outputs.branch }}
+        repository: QuantConnect/Lean
+        path: Lean
+
+    - name: Checkout Lean Master
+      if: steps.lean-branch-check.outputs.exists != 'true'
+      uses: actions/checkout@v5
+      with:
+        repository: QuantConnect/Lean
+        path: Lean
+
+    - name: Move Lean
+      run: mv Lean ../Lean
+      shell: bash
+
+    - name: Pull foundation image
+      run: docker pull quantconnect/lean:foundation
+      shell: bash
+
+    - name: Define docker helper
+      run: |
+        echo 'runInContainer() { docker exec test-container "$@"; }' > $HOME/ci_functions.sh
+        echo "BASH_ENV=$HOME/ci_functions.sh" >> $GITHUB_ENV
+      shell: bash
