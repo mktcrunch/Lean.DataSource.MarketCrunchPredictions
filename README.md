@@ -14,7 +14,7 @@
 | **Sparse** | true |
 | **Streaming** | no |
 | **Model version** | `mc-eod-v1` |
-| **Coverage** | 2021-06-01 → 2026-06-01, 246 tickers (full-history subset of the ~283-ticker covered universe) |
+| **Coverage** | 2021-06-01 → 2026-06-01, 246 symbols (193 S&P 500 large-caps + 53 ETFs) |
 
 ## Files
 
@@ -113,15 +113,12 @@ an algorithm receives the prediction the evening before and can act on the next 
 
 ## Ticker Universe
 
-The dataset is **not a hand-picked sample** — it is the model's full covered universe. The
-end-of-day model (`mc-eod-v1`) covers ~283 US equities and ETFs (large, liquid names plus
-widely-traded ETFs). Of those, **246 have complete history back to 2021-06-01** and are
-included in the initial release; the rest are dropped from the initial bulk load only because
-they lack full history over the span (e.g. ETFs launched after 2021, names with gaps, or
-delistings — see `coverage_report.json`). Those tickers come online through the daily updates
-as their history accrues. New tickers are appended to the dataset the same way as history (one
-row per ticker per day into each `{ticker}.csv`), so coverage grows over time rather than being
-fixed to a curated list.
+The dataset is **not a hand-picked sample** — it is the full dataset currently available:
+**246 symbols** made up of **193 US large-caps (all current S&P 500 constituents)** plus
+**53 ETFs** spanning broad-index, sector, leveraged/inverse, fixed-income and commodity funds.
+Every series runs the full **Jun 2021 → Jun 2026** span. Coverage is actively expanding over
+the coming months; new tickers are appended the same way as history (one row per ticker per day
+into each `{ticker}.csv`).
 
 ## Market Holidays
 

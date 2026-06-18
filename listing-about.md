@@ -8,5 +8,6 @@ date used for the prediction.
 
 The dataset is point-in-time: every record reflects only information available as of the prior
 trading day's close, so it is free of look-ahead bias and suitable for backtesting. The initial
-release covers 2021-06-01 to 2026-06-01 across 246 US equities and ETFs and is updated daily
-after market close.
+release covers 2021-06-01 to 2026-06-01 across 246 symbols — 193 US large-caps (all current
+S&P 500 constituents) plus 53 ETFs spanning broad-index, sector, leveraged/inverse, fixed-income
+and commodity funds — and is updated daily after market close. Coverage is actively expanding.

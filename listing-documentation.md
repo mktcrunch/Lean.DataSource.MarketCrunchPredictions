@@ -10,8 +10,10 @@ ticker as known at prediction time. Predictions are produced by an end-of-day mo
 are point-in-time: the accuracy statistics and create date reflect only information available
 the trading day before the predicted date.
 
-The initial release covers **2021-06-01 to 2026-06-01** across **246 US equities and ETFs**,
-and it is updated daily after market close.
+The initial release covers **2021-06-01 to 2026-06-01** across **246 symbols** — 193 US
+large-caps (all current S&P 500 constituents) plus 53 ETFs spanning broad-index, sector,
+leveraged/inverse, fixed-income and commodity funds — and is updated daily after market close.
+Every series runs the full span; coverage is actively expanding.
 
 ## About the Provider
 
@@ -169,7 +171,8 @@ time, cutoff_date`.
 - **Point-in-time integrity:** `cutoff_date` and the trailing-accuracy columns reflect only
   information available as of the prior trading day's close (the day *before* `prediction_date`).
   Same-day actuals and accuracy are never used, so the dataset is free of look-ahead bias.
-- **Sparsity:** Some tickers (notably ETFs launched after the period start, and a subset of
-  equities) begin partway through the history. Missing days simply do not appear in the file.
+- **Sparsity:** All 246 series span the full 2021-06-01 → 2026-06-01 range; the data is sparse
+  only in that non-trading days (weekends/holidays) have no rows — they simply do not appear in
+  the file.
 - **Confidence:** `pred_confidence` is 0 for a portion of historical rows where the model did
   not emit a score; this is expected and not a parsing error.
