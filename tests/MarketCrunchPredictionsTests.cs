@@ -81,9 +81,12 @@ namespace QuantConnect.DataLibrary.Tests
 
                 Assert.AreEqual(_config.Symbol, result.Symbol, $"Wrong Symbol for line: {line}");
                 Assert.AreNotEqual(default(DateTime), result.Time, $"Time not set for line: {line}");
-                Assert.AreNotEqual(default(DateTime), result.EndTime, $"EndTime not set for line: {line}");
+                Assert.AreNotEqual(default(DateTime), result.PredictionDate, $"PredictionDate not set for line: {line}");
                 Assert.AreNotEqual(0m, result.PredictionPrice, $"PredictionPrice is zero for line: {line}");
-                Assert.IsTrue(result.Time <= result.EndTime, $"Time after EndTime for line: {line}");
+                // The data is instantaneous (no period): EndTime must equal Time.
+                Assert.AreEqual(result.Time, result.EndTime, $"Data must have no period for line: {line}");
+                // Emitted at 5:30pm ET on the cut-off day.
+                Assert.AreEqual(new TimeSpan(17, 30, 0), result.Time.TimeOfDay, $"Expected 5:30pm emission for line: {line}");
             }
 
             Assert.Greater(parsed, 0, "Expected at least one parsed data row");
@@ -113,6 +116,7 @@ namespace QuantConnect.DataLibrary.Tests
             Assert.AreEqual(original.Last30DAccuracy, clone.Last30DAccuracy);
             Assert.AreEqual(original.Last90DAccuracy, clone.Last90DAccuracy);
             Assert.AreEqual(original.ModelVersion, clone.ModelVersion);
+            Assert.AreEqual(original.PredictionDate, clone.PredictionDate);
             Assert.AreEqual(original.CutoffDate, clone.CutoffDate);
             Assert.AreEqual(original.CreateDate, clone.CreateDate);
         }
@@ -194,8 +198,8 @@ namespace QuantConnect.DataLibrary.Tests
             return new MarketCrunchPredictions
             {
                 Symbol = Symbol.Empty,
-                Time = new DateTime(2024, 3, 19),
-                EndTime = new DateTime(2024, 3, 20),
+                Time = new DateTime(2024, 3, 19, 17, 30, 0),
+                PredictionDate = new DateTime(2024, 3, 20),
                 CreateDate = new DateTime(2026, 6, 12),
                 PredictionPrice = 184.53m,
                 PredictionChange = 0.000009m,

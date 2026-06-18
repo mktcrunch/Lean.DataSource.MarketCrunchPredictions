@@ -14,7 +14,7 @@
 | **Sparse** | true |
 | **Streaming** | no |
 | **Model version** | `mc-eod-v1` |
-| **Coverage** | 2021-06-01 → 2026-06-01, 246 tickers |
+| **Coverage** | 2021-06-01 → 2026-06-01, 246 tickers (full-history subset of the ~283-ticker covered universe) |
 
 ## Files
 
@@ -44,16 +44,16 @@ create_date,ticker,prediction_date,prediction_price,prediction_change,pred_confi
 
 | Property (C#) | Type | Description |
 |---|---|---|
-| `Time` | DateTime | Cut-off date (prior trading day) — the basis of the prediction. |
-| `EndTime` | DateTime | Prediction date — when LEAN fires the point. |
-| `PredictionPrice` | decimal | Predicted close (also `Value`). |
+| `Time` (= `EndTime`) | DateTime | The instant the prediction becomes available: 5:30pm ET on the cut-off day. The data has **no period** (`EndTime == Time`), so the point is emitted at that moment. |
+| `PredictionDate` | DateTime | The trading day the prediction applies to (the next session after the cut-off). |
+| `PredictionPrice` | decimal | Predicted close for `PredictionDate` (also `Value`). |
 | `PredictionChange` | decimal | Predicted change vs. prior close, absolute fraction. |
 | `PredConfidence` | int | Model confidence 0–100. |
 | `Last7DAccuracy` / `Last30DAccuracy` / `Last90DAccuracy` | decimal | Trailing directional accuracy %. |
 | `ModelVersion` | string | Model tag (`mc-eod-v1`). |
 | `ProducedTime` | DateTime | When the record was produced. |
 | `CreateDate` | DateTime | Load date. |
-| `CutoffDate` | DateTime | Last training date (= `Time`). |
+| `CutoffDate` | DateTime | Last training date (the cut-off day; `Time` is this date at 5:30pm ET). |
 
 ## Build & Test
 
@@ -102,12 +102,32 @@ QuantConnect's data fleet runs in production (`QC_DATAFLEET_DEPLOYMENT_DATE` set
 that day's export (one row per ticker) into the existing per-symbol history. Measured on an
 Ubuntu 22.04 aarch64 sandbox; absolute numbers vary by host.
 
-## Publication Lag
+## Timing & Point-in-Time
 
-Predictions are produced after market close (~5:30pm ET) on the cut-off day and apply to the
-**next** trading day. `Time` is the cut-off date (the prior trading day's close, the basis of
-the prediction) and `EndTime` is the prediction date, so the point fires on the day it applies
-to with no look-ahead bias.
+Each prediction is produced after market close (~5:30pm ET) on the cut-off day and applies to
+the **next** trading day. The data point is **instantaneous — it has no period** (`EndTime ==
+Time`); `Time` is the cut-off day at 5:30pm ET, which is exactly when the prediction becomes
+available. The predicted day is exposed as the `PredictionDate` property. Because the point is
+emitted at 5:30pm ET on the production day and never back-dated, there is no look-ahead bias:
+an algorithm receives the prediction the evening before and can act on the next session.
+
+## Ticker Universe
+
+The dataset is **not a hand-picked sample** — it is the model's full covered universe. The
+end-of-day model (`mc-eod-v1`) covers ~283 US equities and ETFs (large, liquid names plus
+widely-traded ETFs). Of those, **246 have complete history back to 2021-06-01** and are
+included in the initial release; the rest are dropped from the initial bulk load only because
+they lack full history over the span (e.g. ETFs launched after 2021, names with gaps, or
+delistings — see `coverage_report.json`). Those tickers come online through the daily updates
+as their history accrues. New tickers are appended to the dataset the same way as history (one
+row per ticker per day into each `{ticker}.csv`), so coverage grows over time rather than being
+fixed to a curated list.
+
+## Market Holidays
+
+The dataset emits only the trading days the model produces — there is no holiday padding or
+calendar synchronization. The data is sparse (`IsSparseData() == true`); algorithms should not
+assume a point on every calendar day.
 
 ## PR / Submission Checklist
 

@@ -34,12 +34,12 @@ namespace QuantConnect.DataSource
         private const string DateFmt = "MM-dd-yyyy";
         private const string TimeFmt = "yyyy-MM-dd HH:mm:ss";
 
-        /// <summary>
-        /// Prediction date — the trading day the prediction applies to. LEAN fires the
-        /// data point when the engine reaches this EndTime. Overridden as an auto-property
-        /// so it has its own backing field, independent of <see cref="BaseData.Time"/>.
-        /// </summary>
-        public override DateTime EndTime { get; set; }
+        // NOTE: This type intentionally does NOT override EndTime. The prediction is an
+        // instantaneous point (no period): BaseData.EndTime returns Time, so the point is
+        // emitted at its Time — 5:30pm ET on the cut-off day, when the prediction is produced.
+
+        /// <summary>The trading day the prediction applies to (the next session after the cut-off).</summary>
+        public DateTime PredictionDate { get; set; }
 
         /// <summary>Date the record was created/loaded (load date of the dataset).</summary>
         public DateTime CreateDate { get; set; }
@@ -116,6 +116,13 @@ namespace QuantConnect.DataSource
             var predictionDate = ParseDate(csv[2], DateFmt);
             var cutoffDate = ParseDate(csv[11], DateFmt);
 
+            // The prediction is produced after the close (~5:30pm ET) of the cut-off day and
+            // becomes available at that moment. No period: Time == EndTime, so the point fires
+            // at 5:30pm ET on the cut-off day — look-ahead free and actionable for the prediction
+            // day's session.
+            var availableTime = (cutoffDate != default ? cutoffDate : predictionDate)
+                .Date.AddHours(17.5);
+
             // Parse numeric cells as nullable so empty cells become null (not 0) and we can
             // distinguish "no value" from a genuine zero. Value falls back to 0m only at assignment.
             var predictionPrice = ParseDecimal(csv[3]);
@@ -124,8 +131,8 @@ namespace QuantConnect.DataSource
             return new MarketCrunchPredictions
             {
                 Symbol = config.Symbol,
-                EndTime = predictionDate,                 // fires on the predicted day
-                Time = cutoffDate != default ? cutoffDate : predictionDate, // basis (prior trading day)
+                Time = availableTime,                     // EndTime == Time (no period)
+                PredictionDate = predictionDate,
                 CutoffDate = cutoffDate,
                 CreateDate = ParseDate(csv[0], DateFmt),
                 PredictionPrice = predictionPrice ?? 0m,
@@ -176,7 +183,7 @@ namespace QuantConnect.DataSource
             {
                 Symbol = Symbol,
                 Time = Time,
-                EndTime = EndTime,
+                PredictionDate = PredictionDate,
                 CreateDate = CreateDate,
                 PredictionPrice = PredictionPrice,
                 PredictionChange = PredictionChange,
@@ -193,6 +200,6 @@ namespace QuantConnect.DataSource
 
         /// <summary>String representation for debugging.</summary>
         public override string ToString()
-            => $"{Symbol} @ {EndTime:yyyy-MM-dd} - Price: {PredictionPrice}, Change: {PredictionChange}, Confidence: {PredConfidence}";
+            => $"{Symbol} pred {PredictionDate:yyyy-MM-dd} - Price: {PredictionPrice}, Change: {PredictionChange}, Confidence: {PredConfidence}";
     }
 }

@@ -152,7 +152,7 @@ time, cutoff_date`.
 |---|---|---|---|
 | `create_date` | `create_date` | date | Date the record was created/loaded (today's date for the initial bulk load). |
 | `ticker` | `symbol` | Symbol | The security the prediction is linked to. |
-| `prediction_date` | `prediction_date` | date | Trading day the prediction applies to. Maps to LEAN **EndTime** (when the point fires). |
+| `prediction_date` | `prediction_date` | date | Trading day the prediction applies to. Exposed as the `PredictionDate` property. |
 | `prediction_price` | `prediction_price` | decimal | Predicted close price for the prediction date. Also mapped to `Value`. |
 | `prediction_change` | `prediction_change` | decimal | Predicted change vs. the prior close, as an absolute fraction (e.g. `0.0027` = +0.27%). |
 | `pred_confidence` | `pred_confidence` | int | Model confidence score (0–100). 0 where the model did not emit a confidence. |
@@ -161,7 +161,7 @@ time, cutoff_date`.
 | `last_90d_accuracy` | `last_90d_accuracy` | decimal | Trailing 90-day directional accuracy %, as of the prior trading day's close. |
 | `model_version` | `model_version` | string | Model version tag that produced the prediction (e.g. `mc-eod-v1`). |
 | `time` | `time` | timestamp | Timestamp when the dataset/record was produced. |
-| `cutoff_date` | `cutoff_date` | date | Last training date used for the next-day prediction (the prior trading day). Maps to LEAN **Time**. |
+| `cutoff_date` | `cutoff_date` | date | Last training date used for the next-day prediction (the prior trading day). LEAN **Time** (= **EndTime**, no period) is this date at 5:30pm ET — when the prediction becomes available. |
 
 ## Coverage & Point-in-Time Notes
 
