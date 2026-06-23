@@ -14,7 +14,7 @@
 | **Sparse** | true |
 | **Streaming** | no |
 | **Model version** | `mc-eod-v1` |
-| **Coverage** | 2021-06-01 → 2026-06-01, 246 symbols (193 S&P 500 large-caps + 53 ETFs) |
+| **Coverage** | 2021-06-01 → 2026-06-01, 113 symbols (survivorship-bias-free S&P 100 point-in-time universe) |
 
 ## Files
 
@@ -27,7 +27,7 @@
 | `tests/MarketCrunchPredictionsTests.cs` | Unit tests (read sample data from `output/`) |
 | `listing-about.md` | Marketplace short description |
 | `listing-documentation.md` | Full usage documentation (Python + C#) |
-| `output/alternative/marketcrunch/predictions/{aapl,spy}.csv` | Minimal header-less sample data (Jan–Jun 2024) for demos/tests |
+| `output/alternative/marketcrunch/predictions/{aapl,jpm}.csv` | Minimal header-less sample data (Jan–Jun 2024) for demos/tests |
 
 ## CSV Format
 
@@ -96,8 +96,8 @@ QC_DATAFLEET_DEPLOYMENT_DATE=$(date +%Y%m%d) dotnet run --project DataProcessing
 dotnet run --project DataProcessing/DataProcessing.csproj
 ```
 
-Processing duration (measured over all 246 tickers, ~308,800 prediction rows) —
-**Full dataset: ~2.0s** · **One-day update: ~0.3–0.5s**. The one-day update is the pass
+Processing duration (measured over all 113 tickers, ~139,900 prediction rows) —
+**Full dataset: ~1.0s** · **One-day update: ~0.3–0.5s**. The one-day update is the pass
 QuantConnect's data fleet runs in production (`QC_DATAFLEET_DEPLOYMENT_DATE` set): it merges
 that day's export (one row per ticker) into the existing per-symbol history. Measured on an
 Ubuntu 22.04 aarch64 sandbox; absolute numbers vary by host.
@@ -113,12 +113,13 @@ an algorithm receives the prediction the evening before and can act on the next 
 
 ## Ticker Universe
 
-The dataset is **not a hand-picked sample** — it is the full dataset currently available:
-**246 symbols** made up of **193 US large-caps (all current S&P 500 constituents)** plus
-**53 ETFs** spanning broad-index, sector, leveraged/inverse, fixed-income and commodity funds.
-Every series runs the full **Jun 2021 → Jun 2026** span. Coverage is actively expanding over
-the coming months; new tickers are appended the same way as history (one row per ticker per day
-into each `{ticker}.csv`).
+The dataset is the **survivorship-bias-free S&P 100 point-in-time universe** — **113 symbols**:
+every name that was an S&P 100 (OEX) constituent at any time during Jun 2021 → Jun 2026 (101
+current members plus the 12 names removed during the window, so backtests are free of
+survivorship bias). Names that entered or left the index mid-window carry data only for the
+period they have it, which is why a few series start late or end early. Coverage expands over
+time; new names are appended the same way as history (one row per ticker per day into each
+`{ticker}.csv`).
 
 ## Market Holidays
 
@@ -136,7 +137,7 @@ assume a point on every calendar day.
 - [ ] `DataTimeZone`, `SupportedResolutions`, `DefaultResolution`, `IsSparseData`,
       `RequiresMapping` return correct values
 - [x] `output/` contains only minimal sample data copied from the temp output directory
-      (AAPL + SPY, Jan–Jun 2024)
+      (AAPL + JPM, Jan–Jun 2024)
 - [ ] Demo algorithms run in both C# and Python without errors
 - [ ] `listing-about.md` and `listing-documentation.md` complete; asset classes capitalized
 - [ ] CI (`.github/workflows/build.yml`) green
