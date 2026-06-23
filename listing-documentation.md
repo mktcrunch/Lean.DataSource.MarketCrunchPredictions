@@ -177,3 +177,7 @@ time, cutoff_date`.
   (weekends/holidays) have no rows — they simply do not appear in the file.
 - **Confidence:** `pred_confidence` is 0 for a portion of historical rows where the model did
   not emit a score; this is expected and not a parsing error.
+- **Symbol change (BK → BNY):** BNY Mellon changed its ticker from `BK` to `BNY` effective
+  ~2026-05-22. The `bk.csv` file is the continuous security series — `BK` predictions through
+  2026-05-20, then `BNY` predictions from 2026-05-22 to 2026-06-01 — and the latest snapshot's
+  BK row is sourced from BNY. (LEAN's ticker mapping handles this rename automatically.)
