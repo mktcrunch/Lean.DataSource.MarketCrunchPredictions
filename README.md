@@ -2,7 +2,7 @@
 
 ## Overview
 
-**MarketCrunch AI – Predictions** – next-trading-day price forecasts for US equities and ETFs.
+**MarketCrunch AI – Predictions** – next-trading-day price forecasts for US large-cap equities.
 
 | Property | Value |
 |---|---|

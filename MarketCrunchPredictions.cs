@@ -24,7 +24,7 @@ using QuantConnect.Util;
 namespace QuantConnect.DataSource
 {
     /// <summary>
-    /// MarketCrunch AI next-trading-day price predictions for US equities and ETFs.
+    /// MarketCrunch AI next-trading-day price predictions for US large-cap equities.
     /// One record per security per prediction date, including the predicted close,
     /// predicted change, model confidence, trailing directional-accuracy statistics,
     /// and the training cut-off date used to produce the prediction.

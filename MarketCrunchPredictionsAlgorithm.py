@@ -7,7 +7,7 @@ from QuantConnect.DataSource import *
 class MarketCrunchPredictionsAlgorithm(QCAlgorithm):
     """
     Demonstration algorithm showing how to use the MarketCrunchPredictions custom dataset.
-    Subscribes to SPY equity and the linked MarketCrunch prediction stream, and acts on
+    Subscribes to AAPL equity and the linked MarketCrunch prediction stream, and acts on
     the predicted next-day direction.
     """
 
@@ -17,7 +17,7 @@ class MarketCrunchPredictionsAlgorithm(QCAlgorithm):
         self.set_cash(100000)
 
         # Subscribe to equity first, then add the linked custom data.
-        self._equity_symbol = self.add_equity("SPY", Resolution.DAILY).symbol
+        self._equity_symbol = self.add_equity("AAPL", Resolution.DAILY).symbol
         self._custom_data_symbol = self.add_data(MarketCrunchPredictions, self._equity_symbol).symbol
 
     def on_data(self, slice: Slice):

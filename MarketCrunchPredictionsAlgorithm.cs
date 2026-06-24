@@ -20,7 +20,7 @@ namespace QuantConnect.Algorithm.CSharp
 {
     /// <summary>
     /// Demonstration algorithm showing how to use the MarketCrunchPredictions custom dataset.
-    /// Subscribes to SPY equity and the linked MarketCrunch prediction stream, and acts on
+    /// Subscribes to AAPL equity and the linked MarketCrunch prediction stream, and acts on
     /// the predicted next-day direction.
     /// </summary>
     public class MarketCrunchPredictionsAlgorithm : QCAlgorithm
@@ -35,7 +35,7 @@ namespace QuantConnect.Algorithm.CSharp
             SetCash(100000);
 
             // Subscribe to equity first, then add the linked custom data.
-            _equitySymbol = AddEquity("SPY", Resolution.Daily).Symbol;
+            _equitySymbol = AddEquity("AAPL", Resolution.Daily).Symbol;
             _customDataSymbol = AddData<MarketCrunchPredictions>(_equitySymbol).Symbol;
         }
 

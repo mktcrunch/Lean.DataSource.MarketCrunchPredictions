@@ -34,7 +34,7 @@ This prints the **GitHub repo URL** (e.g. `https://github.com/<your-account>/Lea
 
 ## 5. Upload the full data archive to Dropbox
 The repo `output/` holds only sample data. The full dataset archive
-(`Lean.DataSource.MarketCrunchPredictions-data.tar.gz`, 246 tickers) goes to Dropbox:
+(`Lean.DataSource.MarketCrunchPredictions-data.tar.gz`, 113 tickers) goes to Dropbox:
 ```bash
 curl -s -X POST https://content.dropboxapi.com/2/files/upload \
   --header "Authorization: Bearer $DROPBOX_ACCESS_TOKEN" \

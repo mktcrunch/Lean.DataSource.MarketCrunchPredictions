@@ -51,7 +51,7 @@ namespace QuantConnect.DataProcessing
     ///   - Config.Get("marketcrunch-daily-file")                          – path to the export CSV
     ///   - QC_DATAFLEET_DEPLOYMENT_DATE env var (yyyyMMdd)                 – set => incremental mode
     ///
-    /// Processing times (246 tickers, ~308,800 rows; Ubuntu 22.04 aarch64):
+    /// Processing times (113 tickers, ~139,900 rows; Ubuntu 22.04 aarch64):
     ///   Full dataset:   ~2.0s
     ///   One day update: ~0.3-0.5s
     /// </summary>

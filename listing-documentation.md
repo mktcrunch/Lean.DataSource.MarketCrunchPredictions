@@ -3,7 +3,7 @@
 ## Introduction
 
 The MarketCrunch Predictions dataset, by MarketCrunch AI, provides next-trading-day price
-predictions for US equities and ETFs. Each record contains the predicted close price and
+predictions for US large-cap equities. Each record contains the predicted close price and
 predicted percentage change for the following trading day, the model's confidence in that
 prediction, and trailing directional-accuracy statistics (7-, 30-, and 90-day) for the
 ticker as known at prediction time. Predictions are produced by an end-of-day model run and
@@ -177,7 +177,6 @@ time, cutoff_date`.
   (weekends/holidays) have no rows — they simply do not appear in the file.
 - **Confidence:** `pred_confidence` is 0 for a portion of historical rows where the model did
   not emit a score; this is expected and not a parsing error.
-- **Symbol change (BK → BNY):** BNY Mellon changed its ticker from `BK` to `BNY` effective
-  ~2026-05-22. The `bk.csv` file is the continuous security series — `BK` predictions through
-  2026-05-20, then `BNY` predictions from 2026-05-22 to 2026-06-01 — and the latest snapshot's
-  BK row is sourced from BNY. (LEAN's ticker mapping handles this rename automatically.)
+- **Symbol change (BK → BNY):** BNY Mellon changed its ticker from `BK` to `BNY` in late May 2026.
+  The dataset uses the official ticker **BNY** (`bny.csv`) for the full continuous history.
+  (LEAN's ticker mapping handles the rename automatically.)
